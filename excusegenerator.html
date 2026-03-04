@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Excuse Generator</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: #101522;
+      --card: #182033;
+      --text: #f4f6ff;
+      --muted: #b4bfdc;
+      --accent: #6aa6ff;
+      --accent-2: #8b6dff;
+      --good: #38c793;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #1f2d4d 0%, var(--bg) 50%);
+      color: var(--text);
+      display: grid;
+      place-items: center;
+      padding: 2rem;
+    }
+
+    .container {
+      width: min(850px, 100%);
+      background: color-mix(in srgb, var(--card), black 12%);
+      border: 1px solid color-mix(in srgb, var(--accent), transparent 70%);
+      border-radius: 18px;
+      padding: 1.5rem;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    h1 {
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      font-size: clamp(1.5rem, 3vw, 2rem);
+    }
+
+    .subtitle {
+      margin-top: 0;
+      color: var(--muted);
+      margin-bottom: 1.25rem;
+    }
+
+    .topics {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+    }
+
+    button {
+      border: 1px solid color-mix(in srgb, var(--accent), transparent 45%);
+      background: linear-gradient(130deg, color-mix(in srgb, var(--accent), black 15%), color-mix(in srgb, var(--accent-2), black 15%));
+      color: white;
+      border-radius: 999px;
+      padding: 0.55rem 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform .12s ease, filter .12s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+    }
+
+    .output-card {
+      background: color-mix(in srgb, #1f2740, black 8%);
+      border: 1px solid color-mix(in srgb, var(--accent), transparent 78%);
+      border-radius: 14px;
+      padding: 1rem;
+      min-height: 150px;
+    }
+
+    .label {
+      display: inline-flex;
+      align-items: center;
+      gap: .45rem;
+      color: var(--good);
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: .2px;
+      margin-bottom: .65rem;
+    }
+
+    .dot {
+      width: 8px;
+      aspect-ratio: 1;
+      border-radius: 50%;
+      background: var(--good);
+      box-shadow: 0 0 10px var(--good);
+    }
+
+    #excuse {
+      margin: 0;
+      font-size: 1.08rem;
+      line-height: 1.55;
+    }
+
+    .controls {
+      margin-top: .9rem;
+      display: flex;
+      gap: .5rem;
+      flex-wrap: wrap;
+    }
+
+    .ghost {
+      background: transparent;
+      color: var(--muted);
+      border-color: color-mix(in srgb, var(--muted), transparent 55%);
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <h1>AI Excuse Generator</h1>
+    <p class="subtitle">Pick a topic and get an instant AI-style excuse you can copy and use.</p>
+
+    <section class="topics" aria-label="Excuse topics">
+      <button data-topic="school">School</button>
+      <button data-topic="doctor">Doctor's Appointment</button>
+      <button data-topic="work">Work</button>
+      <button data-topic="family">Family</button>
+      <button data-topic="social">Social Event</button>
+      <button data-topic="technology">Technology Issue</button>
+    </section>
+
+    <section class="output-card" aria-live="polite">
+      <div class="label"><span class="dot"></span> AI Response</div>
+      <p id="excuse">Click a topic button to generate an excuse.</p>
+      <div class="controls">
+        <button id="regenerate" class="ghost">Regenerate last topic</button>
+        <button id="copy" class="ghost">Copy excuse</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const excuseBank = {
+      school: [
+        "I woke up with a severe migraine and couldn't focus enough to attend class safely.",
+        "My bus route was unexpectedly suspended this morning, and I had no alternate transportation in time.",
+        "A family emergency came up before school and I had to help at home first."
+      ],
+      doctor: [
+        "I had a last-minute appointment because my doctor needed immediate follow-up tests.",
+        "The clinic rescheduled me to an earlier opening today and said this was the only available slot.",
+        "I needed to take a relative to an urgent medical visit and stay for support."
+      ],
+      work: [
+        "My power went out overnight, and my alarm and internet were both affected this morning.",
+        "I had an unexpected maintenance emergency at home that required me to wait for the technician.",
+        "I had sudden food poisoning symptoms and wasn't able to safely make it in on time."
+      ],
+      family: [
+        "A close family member needed immediate assistance, so I had to prioritize helping them.",
+        "I had to handle an urgent family matter involving childcare that couldn't be delayed.",
+        "There was a time-sensitive issue at home that required me to be present unexpectedly."
+      ],
+      social: [
+        "I'm really sorry, but I overcommitted this week and need to recharge tonight.",
+        "Something personal came up at the last minute, so I won't be able to make it.",
+        "I just found out I need to be somewhere with family during that time."
+      ],
+      technology: [
+        "My laptop entered a repair loop after an update and I couldn't access my files in time.",
+        "My internet provider had an outage in my area, so I couldn't join online as planned.",
+        "My phone stopped syncing my calendar reminders, and I missed the schedule update."
+      ]
+    };
+
+    const excuseEl = document.getElementById('excuse');
+    const topicButtons = document.querySelectorAll('[data-topic]');
+    const regenerateBtn = document.getElementById('regenerate');
+    const copyBtn = document.getElementById('copy');
+
+    let lastTopic = null;
+
+    function typeOut(text) {
+      excuseEl.textContent = 'AI is thinking...';
+      let i = 0;
+      const timer = setInterval(() => {
+        excuseEl.textContent = text.slice(0, i);
+        i += 1;
+        if (i > text.length) clearInterval(timer);
+      }, 16);
+    }
+
+    function generateExcuse(topic) {
+      const options = excuseBank[topic];
+      if (!options?.length) {
+        excuseEl.textContent = 'No excuses available for this topic yet.';
+        return;
+      }
+
+      lastTopic = topic;
+      const selected = options[Math.floor(Math.random() * options.length)];
+      typeOut(selected);
+    }
+
+    topicButtons.forEach((button) => {
+      button.addEventListener('click', () => generateExcuse(button.dataset.topic));
+    });
+
+    regenerateBtn.addEventListener('click', () => {
+      if (!lastTopic) {
+        excuseEl.textContent = 'Pick a topic first, then regenerate.';
+        return;
+      }
+      generateExcuse(lastTopic);
+    });
+
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(excuseEl.textContent);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => {
+          copyBtn.textContent = 'Copy excuse';
+        }, 1200);
+      } catch {
+        copyBtn.textContent = 'Copy blocked';
+        setTimeout(() => {
+          copyBtn.textContent = 'Copy excuse';
+        }, 1200);
+      }
+    });
+  </script>
+</body>
+</html>
